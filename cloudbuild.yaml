@@ -1,6 +1,7 @@
 steps:
   # ── UNIT TEST ──────────────────────────────────────────────────────────────
   # Compile le code Dataform depuis le commit courant et vérifie qu'il n'y a
+
   # aucune erreur de compilation (syntaxe SQLX, refs manquantes, etc.)
   - name: alpine
     id: unit-test
