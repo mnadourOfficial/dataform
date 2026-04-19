@@ -1,0 +1,16 @@
+config {
+  type: "table",
+  schema: "seeds",
+  description: "Référentiel statique des catégories",
+  tags: ["seed"],
+  assertions: {
+    uniqueKey: ["category_id"],
+    nonNull: ["category_id", "category_name"]
+  }
+}
+
+SELECT 1 AS category_id, 'Electronics'  AS category_name, 'High value items'   AS description UNION ALL
+SELECT 2,                 'Clothing',                       'Apparel and accessories'          UNION ALL
+SELECT 3,                 'Food',                           'Grocery and fresh produce'        UNION ALL
+SELECT 4,                 'Sports',                         'Sporting goods and equipment'     UNION ALL
+SELECT 5,                 'Books',                          'Books and educational material'

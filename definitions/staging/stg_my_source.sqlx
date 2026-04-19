@@ -1,0 +1,23 @@
+config {
+  type: "table",
+  schema: "staging",
+  description: "Staging de my_source_table : nettoyage et typage",
+  tags: ["staging"],
+  assertions: {
+    nonNull: ["id"]
+  },
+  columns: {
+    id:           "Identifiant unique de la ligne",
+    created_at:   "Date de création",
+    updated_at:   "Date de dernière mise à jour",
+    created_date: "Date de création (DATE)"
+  }
+}
+
+SELECT
+  CAST(id AS STRING)          AS id,
+  TIMESTAMP(created_at)       AS created_at,
+  TIMESTAMP(updated_at)       AS updated_at,
+  DATE(created_at)            AS created_date
+FROM ${ref("my_source_table")}
+WHERE id IS NOT NULL

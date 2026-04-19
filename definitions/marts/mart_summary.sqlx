@@ -1,0 +1,22 @@
+config {
+  type: "table",
+  schema: "marts",
+  description: "Résumé quotidien des enregistrements par date de création",
+  tags: ["mart"],
+  assertions: {
+    uniqueKey: ["created_date"],
+    nonNull: ["created_date", "record_count"]
+  },
+  columns: {
+    created_date:  "Date de création",
+    record_count:  "Nombre d'enregistrements",
+    days_since:    "Nombre de jours depuis la création"
+  }
+}
+
+SELECT
+  created_date,
+  COUNT(*)                                          AS record_count,
+  DATE_DIFF(CURRENT_DATE(), created_date, DAY)      AS days_since
+FROM ${ref("stg_my_source")}
+GROUP BY created_date
