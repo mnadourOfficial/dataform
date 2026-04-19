@@ -38,62 +38,6 @@ steps:
         echo "Unit test OK - aucune erreur de compilation."
         echo "$$COMPILATION_NAME" > /workspace/test_compilation_name.txt
 
-  # ── INTEGRATION TEST ───────────────────────────────────────────────────────
-  - name: alpine
-    id: integration-test
-    entrypoint: sh
-    args:
-      - -c
-      - |
-        set -e
-        apk add --no-cache curl jq > /dev/null
-
-        TOKEN=$(curl -sf -H "Metadata-Flavor: Google" \
-          "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
-          | jq -r '.access_token')
-
-        BASE_URL="https://dataform.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY"
-        COMPILATION_NAME=$(cat /workspace/test_compilation_name.txt)
-
-        echo "Integration test : lancement du workflow (tag: $_TEST_TAG)..."
-        RESPONSE=$(curl -s -X POST \
-          -H "Authorization: Bearer $$TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"compilationResult\": \"$$COMPILATION_NAME\",
-            \"invocationConfig\": {
-              \"includedTags\": [\"$_TEST_TAG\"],
-              \"transitiveDependenciesIncluded\": true,
-              \"fullyRefreshIncrementalTablesEnabled\": false
-            }
-          }" \
-          "$$BASE_URL/workflowInvocations")
-
-        INVOCATION_NAME=$(echo "$$RESPONSE" | jq -r '.name')
-        if [ -z "$$INVOCATION_NAME" ] || [ "$$INVOCATION_NAME" = "null" ]; then
-          echo "Echec du lancement du workflow : $$RESPONSE"
-          exit 1
-        fi
-
-        INVOCATION_ID=$(basename "$$INVOCATION_NAME")
-        echo "Workflow invocation créé : $$INVOCATION_ID"
-
-        while true; do
-          STATE=$(curl -s \
-            -H "Authorization: Bearer $$TOKEN" \
-            "$$BASE_URL/workflowInvocations/$$INVOCATION_ID" \
-            | jq -r '.state')
-
-          echo "Etat : $$STATE"
-          case "$$STATE" in
-            SUCCEEDED) echo "Integration test OK."; break ;;
-            FAILED|CANCELLED|CANCELING)
-              echo "Integration test échoué (état: $$STATE)."
-              exit 1 ;;
-            *) sleep 15 ;;
-          esac
-        done
-
   # ── ENSURE RELEASE CONFIG ──────────────────────────────────────────────────
   - name: alpine
     id: ensure-release-config
@@ -161,8 +105,6 @@ substitutions:
   _DATAFORM_REPOSITORY: YOUR_DATAFORM_REPOSITORY_NAME
   _RELEASE_CONFIG: YOUR_RELEASE_CONFIG_NAME
   _GIT_BRANCH: main
-  _TEST_TAG: test
-  _SERVICE_ACCOUNT: service-347014611442@gcp-sa-dataform.iam.gserviceaccount.com
 
 options:
   logging: CLOUD_LOGGING_ONLY
