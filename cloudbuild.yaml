@@ -1,8 +1,5 @@
 steps:
   # ── UNIT TEST ──────────────────────────────────────────────────────────────
-  # Compile le code Dataform depuis le commit courant et vérifie qu'il n'y a
-
-  # aucune erreur de compilation (syntaxe SQLX, refs manquantes, etc.)
   - name: alpine
     id: unit-test
     entrypoint: sh
@@ -20,30 +17,28 @@ steps:
 
         echo "Unit test : compilation du commit $COMMIT_SHA..."
         RESPONSE=$(curl -sf -X POST \
-          -H "Authorization: Bearer $TOKEN" \
+          -H "Authorization: Bearer $$TOKEN" \
           -H "Content-Type: application/json" \
           -d "{\"gitCommitish\": \"$COMMIT_SHA\"}" \
-          "$BASE_URL/compilationResults")
+          "$$BASE_URL/compilationResults")
 
-        COMPILATION_NAME=$(echo "$RESPONSE" | jq -r '.name')
-        if [ -z "$COMPILATION_NAME" ] || [ "$COMPILATION_NAME" = "null" ]; then
-          echo "Echec de la compilation : $RESPONSE"
+        COMPILATION_NAME=$(echo "$$RESPONSE" | jq -r '.name')
+        if [ -z "$$COMPILATION_NAME" ] || [ "$$COMPILATION_NAME" = "null" ]; then
+          echo "Echec de la compilation : $$RESPONSE"
           exit 1
         fi
 
-        ERRORS=$(echo "$RESPONSE" | jq '.compilationErrors | length')
-        if [ "$ERRORS" -gt 0 ]; then
+        ERRORS=$(echo "$$RESPONSE" | jq '.compilationErrors | length')
+        if [ "$$ERRORS" -gt 0 ]; then
           echo "Erreurs de compilation détectées :"
-          echo "$RESPONSE" | jq '.compilationErrors'
+          echo "$$RESPONSE" | jq '.compilationErrors'
           exit 1
         fi
 
         echo "Unit test OK - aucune erreur de compilation."
-        echo "$COMPILATION_NAME" > /workspace/test_compilation_name.txt
+        echo "$$COMPILATION_NAME" > /workspace/test_compilation_name.txt
 
   # ── INTEGRATION TEST ───────────────────────────────────────────────────────
-  # Lance un workflow invocation sur le dataset de test (tag: test)
-  # et attend qu'il se termine avec succès.
   - name: alpine
     id: integration-test
     entrypoint: sh
@@ -60,40 +55,40 @@ steps:
         BASE_URL="https://dataform.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY"
         COMPILATION_NAME=$(cat /workspace/test_compilation_name.txt)
 
-        echo "Integration test : lancement du workflow (tag: $_TEST_TAG)..."
+        echo "Integration test : lancement du workflow (tag: $\_TEST_TAG)..."
         RESPONSE=$(curl -sf -X POST \
-          -H "Authorization: Bearer $TOKEN" \
+          -H "Authorization: Bearer $$TOKEN" \
           -H "Content-Type: application/json" \
           -d "{
-            \"compilationResult\": \"$COMPILATION_NAME\",
+            \"compilationResult\": \"$$COMPILATION_NAME\",
             \"invocationConfig\": {
               \"includedTags\": [\"$_TEST_TAG\"],
               \"transitiveDependenciesIncluded\": true,
               \"fullyRefreshIncrementalTablesEnabled\": false
             }
           }" \
-          "$BASE_URL/workflowInvocations")
+          "$$BASE_URL/workflowInvocations")
 
-        INVOCATION_NAME=$(echo "$RESPONSE" | jq -r '.name')
-        if [ -z "$INVOCATION_NAME" ] || [ "$INVOCATION_NAME" = "null" ]; then
-          echo "Echec du lancement du workflow : $RESPONSE"
+        INVOCATION_NAME=$(echo "$$RESPONSE" | jq -r '.name')
+        if [ -z "$$INVOCATION_NAME" ] || [ "$$INVOCATION_NAME" = "null" ]; then
+          echo "Echec du lancement du workflow : $$RESPONSE"
           exit 1
         fi
 
-        INVOCATION_ID=$(basename "$INVOCATION_NAME")
-        echo "Workflow invocation créé : $INVOCATION_ID"
+        INVOCATION_ID=$(basename "$$INVOCATION_NAME")
+        echo "Workflow invocation créé : $$INVOCATION_ID"
 
         while true; do
           STATE=$(curl -sf \
-            -H "Authorization: Bearer $TOKEN" \
-            "$BASE_URL/workflowInvocations/$INVOCATION_ID" \
+            -H "Authorization: Bearer $$TOKEN" \
+            "$$BASE_URL/workflowInvocations/$$INVOCATION_ID" \
             | jq -r '.state')
 
-          echo "Etat : $STATE"
-          case "$STATE" in
+          echo "Etat : $$STATE"
+          case "$$STATE" in
             SUCCEEDED) echo "Integration test OK."; break ;;
             FAILED|CANCELLED|CANCELING)
-              echo "Integration test échoué (état: $STATE)."
+              echo "Integration test échoué (état: $$STATE)."
               exit 1 ;;
             *) sleep 15 ;;
           esac
@@ -116,16 +111,16 @@ steps:
         BASE_URL="https://dataform.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY"
 
         STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-          -H "Authorization: Bearer $TOKEN" \
-          "$BASE_URL/releaseConfigs/$_RELEASE_CONFIG")
+          -H "Authorization: Bearer $$TOKEN" \
+          "$$BASE_URL/releaseConfigs/$_RELEASE_CONFIG")
 
-        if [ "$STATUS" = "404" ]; then
+        if [ "$$STATUS" = "404" ]; then
           echo "Release config '$_RELEASE_CONFIG' introuvable, création en cours..."
           curl -sf -X POST \
-            -H "Authorization: Bearer $TOKEN" \
+            -H "Authorization: Bearer $$TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"gitCommitish\": \"$_GIT_BRANCH\"}" \
-            "$BASE_URL/releaseConfigs?releaseConfigId=$_RELEASE_CONFIG"
+            "$$BASE_URL/releaseConfigs?releaseConfigId=$_RELEASE_CONFIG"
           echo "Release config créée."
         else
           echo "Release config '$_RELEASE_CONFIG' déjà existante."
@@ -149,17 +144,17 @@ steps:
         RELEASE_CONFIG_REF="projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY/releaseConfigs/$_RELEASE_CONFIG"
 
         RESPONSE=$(curl -sf -X POST \
-          -H "Authorization: Bearer $TOKEN" \
+          -H "Authorization: Bearer $$TOKEN" \
           -H "Content-Type: application/json" \
-          -d "{\"releaseConfig\": \"$RELEASE_CONFIG_REF\"}" \
-          "$BASE_URL/compilationResults")
+          -d "{\"releaseConfig\": \"$$RELEASE_CONFIG_REF\"}" \
+          "$$BASE_URL/compilationResults")
 
-        NAME=$(echo "$RESPONSE" | jq -r '.name')
-        if [ -z "$NAME" ] || [ "$NAME" = "null" ]; then
-          echo "Erreur : $RESPONSE"
+        NAME=$(echo "$$RESPONSE" | jq -r '.name')
+        if [ -z "$$NAME" ] || [ "$$NAME" = "null" ]; then
+          echo "Erreur : $$RESPONSE"
           exit 1
         fi
-        echo "Compilation result créé : $NAME"
+        echo "Compilation result créé : $$NAME"
 
 substitutions:
   _DATAFORM_REGION: europe-west1
