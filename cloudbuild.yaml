@@ -104,8 +104,8 @@ steps:
         PATCH_RESPONSE=$(curl -s -X PATCH \
           -H "Authorization: Bearer $$TOKEN" \
           -H "Content-Type: application/json" \
-          -d "{\"releaseCompilationResult\": \"$$NAME\"}" \
-          "$$BASE_URL/releaseConfigs/$_RELEASE_CONFIG?updateMask=releaseCompilationResult")
+          -d "{\"gitCommitish\": \"$_GIT_BRANCH\", \"releaseCompilationResult\": \"$$NAME\"}" \
+          "$$BASE_URL/releaseConfigs/$_RELEASE_CONFIG?updateMask=releaseCompilationResult,gitCommitish")
 
         echo "$$PATCH_RESPONSE"
 
