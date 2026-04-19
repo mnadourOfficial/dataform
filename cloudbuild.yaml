@@ -61,11 +61,11 @@ steps:
           -H "Content-Type: application/json" \
           -d "{
             \"compilationResult\": \"$$COMPILATION_NAME\",
-            \"serviceAccount\": \"$_SERVICE_ACCOUNT\",
             \"invocationConfig\": {
               \"includedTags\": [\"$_TEST_TAG\"],
               \"transitiveDependenciesIncluded\": true,
-              \"fullyRefreshIncrementalTablesEnabled\": false
+              \"fullyRefreshIncrementalTablesEnabled\": false,
+              \"serviceAccount\": \"$_SERVICE_ACCOUNT\"
             }
           }" \
           "$$BASE_URL/workflowInvocations")
