@@ -55,8 +55,8 @@ steps:
         BASE_URL="https://dataform.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY"
         COMPILATION_NAME=$(cat /workspace/test_compilation_name.txt)
 
-        echo "Integration test : lancement du workflow (tag: $\_TEST_TAG)..."
-        RESPONSE=$(curl -sf -X POST \
+        echo "Integration test : lancement du workflow (tag: $_TEST_TAG)..."
+        RESPONSE=$(curl -s -X POST \
           -H "Authorization: Bearer $$TOKEN" \
           -H "Content-Type: application/json" \
           -d "{
@@ -79,7 +79,7 @@ steps:
         echo "Workflow invocation créé : $$INVOCATION_ID"
 
         while true; do
-          STATE=$(curl -sf \
+          STATE=$(curl -s \
             -H "Authorization: Bearer $$TOKEN" \
             "$$BASE_URL/workflowInvocations/$$INVOCATION_ID" \
             | jq -r '.state')
