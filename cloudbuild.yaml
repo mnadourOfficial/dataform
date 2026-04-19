@@ -100,6 +100,15 @@ steps:
         fi
         echo "Compilation result créé : $$NAME"
 
+        echo "Mise à jour du live compilation result..."
+        PATCH_RESPONSE=$(curl -s -X PATCH \
+          -H "Authorization: Bearer $$TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "{\"releaseCompilationResult\": \"$$NAME\"}" \
+          "$$BASE_URL/releaseConfigs/$_RELEASE_CONFIG?updateMask=releaseCompilationResult")
+
+        echo "$$PATCH_RESPONSE"
+
 substitutions:
   _DATAFORM_REGION: europe-west1
   _DATAFORM_REPOSITORY: YOUR_DATAFORM_REPOSITORY_NAME
