@@ -1,0 +1,16 @@
+config {
+  type: "table",
+  schema: "marts",
+  description: "Example mart table",
+  tags: ["mart"],
+  assertions: {
+    uniqueKey: ["id"],
+    nonNull: ["id", "created_at"]
+  }
+}
+
+SELECT
+  id,
+  created_at,
+  DATE_DIFF(CURRENT_DATE(),created_at, MONTH) AS day_diff
+FROM ${ref("stg_example")}
