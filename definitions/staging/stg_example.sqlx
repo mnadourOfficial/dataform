@@ -13,5 +13,5 @@ SELECT
   id,
   created_at,
   updated_at
-FROM ${ref("example_source")}
+FROM ${ref("my_source_table")}
 WHERE id IS NOT NULL
