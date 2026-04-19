@@ -61,6 +61,7 @@ steps:
           -H "Content-Type: application/json" \
           -d "{
             \"compilationResult\": \"$$COMPILATION_NAME\",
+            \"serviceAccount\": \"$_SERVICE_ACCOUNT\",
             \"invocationConfig\": {
               \"includedTags\": [\"$_TEST_TAG\"],
               \"transitiveDependenciesIncluded\": true,
@@ -162,6 +163,7 @@ substitutions:
   _RELEASE_CONFIG: YOUR_RELEASE_CONFIG_NAME
   _GIT_BRANCH: main
   _TEST_TAG: test
+  _SERVICE_ACCOUNT: service-347014611442@gcp-sa-dataform.iam.gserviceaccount.com
 
 options:
   logging: CLOUD_LOGGING_ONLY
