@@ -6,19 +6,20 @@ steps:
       - -c
       - |
         set -e
-        RELEASE_CONFIG_EXISTS=$(gcloud dataform repositories release-configs describe $_RELEASE_CONFIG \
-          --project=$PROJECT_ID \
-          --region=$_DATAFORM_REGION \
-          --repository=$_DATAFORM_REPOSITORY \
-          --format="value(name)" 2>/dev/null || echo "")
+        TOKEN=$(gcloud auth print-access-token)
+        BASE_URL="https://dataform.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY"
 
-        if [ -z "$$RELEASE_CONFIG_EXISTS" ]; then
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          -H "Authorization: Bearer $$TOKEN" \
+          "$$BASE_URL/releaseConfigs/$_RELEASE_CONFIG")
+
+        if [ "$$STATUS" = "404" ]; then
           echo "Release config '$_RELEASE_CONFIG' introuvable, création en cours..."
-          gcloud dataform repositories release-configs create $_RELEASE_CONFIG \
-            --project=$PROJECT_ID \
-            --region=$_DATAFORM_REGION \
-            --repository=$_DATAFORM_REPOSITORY \
-            --git-commitish=$_GIT_BRANCH
+          curl -s -X POST \
+            -H "Authorization: Bearer $$TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"gitCommitish\": \"$_GIT_BRANCH\"}" \
+            "$$BASE_URL/releaseConfigs?releaseConfigId=$_RELEASE_CONFIG"
           echo "Release config créée."
         else
           echo "Release config '$_RELEASE_CONFIG' déjà existante."
@@ -31,14 +32,24 @@ steps:
       - -c
       - |
         set -e
-        COMPILATION_RESULT=$(gcloud dataform repositories compilation-results create \
-          --project=$PROJECT_ID \
-          --region=$_DATAFORM_REGION \
-          --repository=$_DATAFORM_REPOSITORY \
-          --release-config=projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY/releaseConfigs/$_RELEASE_CONFIG \
-          --format="value(name)")
+        TOKEN=$(gcloud auth print-access-token)
+        BASE_URL="https://dataform.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY"
+        RELEASE_CONFIG_REF="projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY/releaseConfigs/$_RELEASE_CONFIG"
 
-        echo "Compilation result créé : $$COMPILATION_RESULT"
+        RESPONSE=$(curl -s -X POST \
+          -H "Authorization: Bearer $$TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "{\"releaseConfig\": \"$$RELEASE_CONFIG_REF\"}" \
+          "$$BASE_URL/compilationResults")
+
+        echo "$$RESPONSE"
+
+        NAME=$(echo "$$RESPONSE" | grep -o '"name": *"[^"]*"' | head -1 | cut -d'"' -f4)
+        if [ -z "$$NAME" ]; then
+          echo "Erreur lors de la création du compilation result."
+          exit 1
+        fi
+        echo "Compilation result créé : $$NAME"
 
 substitutions:
   _DATAFORM_REGION: europe-west1
