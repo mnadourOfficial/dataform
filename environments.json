@@ -1,0 +1,25 @@
+{
+  "environments": [
+    {
+      "name": "dev",
+      "configOverride": {
+        "defaultSchema": "dataform_dev",
+        "assertionSchema": "dataform_assertions_dev"
+      }
+    },
+    {
+      "name": "staging",
+      "configOverride": {
+        "defaultSchema": "dataform_staging",
+        "assertionSchema": "dataform_assertions_staging"
+      }
+    },
+    {
+      "name": "production",
+      "configOverride": {
+        "defaultSchema": "dataform",
+        "assertionSchema": "dataform_assertions"
+      }
+    }
+  ]
+}

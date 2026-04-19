@@ -1,0 +1,17 @@
+config {
+  type: "table",
+  schema: "staging",
+  description: "Staging model for example source",
+  tags: ["staging"],
+  columns: {
+    id: "Primary key",
+    created_at: "Record creation timestamp"
+  }
+}
+
+SELECT
+  id,
+  created_at,
+  updated_at
+FROM ${ref("example_source")}
+WHERE id IS NOT NULL

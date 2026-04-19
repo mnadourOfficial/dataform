@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "mehdi-nadour-dbt",
+  schema: "dbt_dataset",
+  name: "my_source_table",
+  description: "Raw source table - replace with your actual source"
+}

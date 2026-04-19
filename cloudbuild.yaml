@@ -1,0 +1,50 @@
+steps:
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: ensure-release-config
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        RELEASE_CONFIG_EXISTS=$(gcloud dataform repositories release-configs describe $_RELEASE_CONFIG \
+          --project=$PROJECT_ID \
+          --region=$_DATAFORM_REGION \
+          --repository=$_DATAFORM_REPOSITORY \
+          --format="value(name)" 2>/dev/null || echo "")
+
+        if [ -z "$$RELEASE_CONFIG_EXISTS" ]; then
+          echo "Release config '$_RELEASE_CONFIG' introuvable, création en cours..."
+          gcloud dataform repositories release-configs create $_RELEASE_CONFIG \
+            --project=$PROJECT_ID \
+            --region=$_DATAFORM_REGION \
+            --repository=$_DATAFORM_REPOSITORY \
+            --git-commitish=$_GIT_BRANCH
+          echo "Release config créée."
+        else
+          echo "Release config '$_RELEASE_CONFIG' déjà existante."
+        fi
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: create-compilation-result
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        COMPILATION_RESULT=$(gcloud dataform repositories compilation-results create \
+          --project=$PROJECT_ID \
+          --region=$_DATAFORM_REGION \
+          --repository=$_DATAFORM_REPOSITORY \
+          --release-config=projects/$PROJECT_ID/locations/$_DATAFORM_REGION/repositories/$_DATAFORM_REPOSITORY/releaseConfigs/$_RELEASE_CONFIG \
+          --format="value(name)")
+
+        echo "Compilation result créé : $$COMPILATION_RESULT"
+
+substitutions:
+  _DATAFORM_REGION: europe-west1
+  _DATAFORM_REPOSITORY: YOUR_DATAFORM_REPOSITORY_NAME
+  _RELEASE_CONFIG: YOUR_RELEASE_CONFIG_NAME
+  _GIT_BRANCH: main
+
+options:
+  logging: CLOUD_LOGGING_ONLY
