@@ -64,8 +64,7 @@ steps:
             \"invocationConfig\": {
               \"includedTags\": [\"$_TEST_TAG\"],
               \"transitiveDependenciesIncluded\": true,
-              \"fullyRefreshIncrementalTablesEnabled\": false,
-              \"serviceAccount\": \"$_SERVICE_ACCOUNT\"
+              \"fullyRefreshIncrementalTablesEnabled\": false
             }
           }" \
           "$$BASE_URL/workflowInvocations")
